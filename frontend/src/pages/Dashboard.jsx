@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
 import API from '../services/api';
+import TransactionForm from '../components/TransactionForm';
+import TransactionChart from '../components/TransactionChart';
+import BudgetTracker from '../components/BudgetTracker';
+import Navbar from '../components/Navbar';
+
 
 const Dashboard = () => {
   const [transactions, setTransactions] = useState([]);
@@ -14,11 +19,9 @@ const Dashboard = () => {
       const res = await API.get('/transactions');
       setTransactions(res.data);
 
-      // Calculate totals
       const income = res.data
         .filter((t) => t.type === 'income')
         .reduce((sum, t) => sum + t.amount, 0);
-
       const expense = res.data
         .filter((t) => t.type === 'expense')
         .reduce((sum, t) => sum + t.amount, 0);
@@ -29,11 +32,21 @@ const Dashboard = () => {
     }
   };
 
+  const handleAddTransaction = () => {
+    fetchTransactions();
+  };
+
   return (
+
     <div className="p-6 bg-gray-100 min-h-screen">
+      
+      {/* NavBar */}
+      <TransactionForm onAdd={handleAddTransaction} />
+      
+      
       <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
 
-      {/* Summary Cards */}
+      {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div className="bg-white p-4 rounded shadow text-green-700 border-l-4 border-green-500">
           <h2 className="text-lg font-medium">Income</h2>
@@ -45,11 +58,25 @@ const Dashboard = () => {
         </div>
         <div className="bg-white p-4 rounded shadow text-blue-700 border-l-4 border-blue-500">
           <h2 className="text-lg font-medium">Savings</h2>
-          <p className="text-2xl font-bold">₹{summary.income - summary.expense}</p>
+          <p className="text-2xl font-bold">
+            ₹{summary.income - summary.expense}
+          </p>
         </div>
       </div>
 
-      {/* Transaction Table */}
+      
+      {/* Budget Tracker */}
+      <BudgetTracker budget={20000} expense={summary.expense} />
+
+      {/* Add transaction form */}
+      <TransactionForm onAdd={handleAddTransaction} />
+
+      {/* Chart with spacing */}
+      <div className="mb-6">
+        <TransactionChart transactions={transactions} />
+      </div>
+
+      {/* Transaction list table */}
       <div className="bg-white p-4 rounded shadow">
         <h2 className="text-xl font-bold mb-4">Recent Transactions</h2>
         <table className="w-full table-auto text-left">
@@ -73,7 +100,7 @@ const Dashboard = () => {
                   <button
                     onClick={async () => {
                       await API.delete(`/transactions/${t._id}`);
-                      fetchTransactions(); // refresh list
+                      fetchTransactions();
                     }}
                     className="text-red-500 hover:text-red-700"
                   >
